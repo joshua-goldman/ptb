@@ -32,12 +32,17 @@ rnn_mode = None
 
 
 def data_type(use_fp16):
+    """
+    The data type.
+    """
     return tf.float16 if use_fp16 else tf.float32
 
 
 class PTBInput(object):
-    """The input data."""
-
+    """
+    The input data.
+    """
+    
     def __init__(self, config, data, name=None):
         self.batch_size = batch_size = config.batch_size
         self.num_steps = num_steps = config.num_steps
@@ -130,13 +135,18 @@ class PTBModel(object):
         self._lr_update = tf.assign(self._lr, self._new_lr)
 
     def _build_rnn_graph(self, inputs, config, is_training):
+        """
+        Builds the RNN graph.
+        """
         if config.rnn_mode == CUDNN:
             return self._build_rnn_graph_cudnn(inputs, config, is_training)
         else:
             return self._build_rnn_graph_lstm(inputs, config, is_training)
 
     def _build_rnn_graph_cudnn(self, inputs, config, is_training):
-        """Build the inference graph using CUDNN cell."""
+        """
+        Build the inference graph using CUDNN cell.
+        """
         inputs = tf.transpose(inputs, [1, 0, 2])
         self._cell = tf.contrib.cudnn_rnn.CudnnLSTM(
             num_layers=config.num_layers,
@@ -169,6 +179,9 @@ class PTBModel(object):
         return outputs, (tf.contrib.rnn.LSTMStateTuple(h=h, c=c),)
 
     def _get_lstm_cell(self, config, is_training):
+        """
+        Retrieves the LSTM cell, either Basic, or Block
+        """
         if config.rnn_mode == BASIC:
             return tf.contrib.rnn.BasicLSTMCell(
                 config.hidden_size, 
@@ -184,7 +197,9 @@ class PTBModel(object):
         raise ValueError("rnn_mode {} not supported".format(config.rnn_mode))
 
     def _build_rnn_graph_lstm(self, inputs, config, is_training):
-        """Build the inference graph using canonical LSTM cells."""
+        """
+        Build the inference graph using canonical LSTM cells.
+        """
         # Slightly better results can be obtained with forget gate biases
         # initialized to 1 but the hyperparameters of the model would need to be
         # different than reported in the paper.
@@ -225,10 +240,15 @@ class PTBModel(object):
         return output, state
 
     def assign_lr(self, session, lr_value):
+        """
+        Assigns the learning rate.
+        """
         session.run(self._lr_update, feed_dict={self._new_lr: lr_value})
 
     def export_ops(self, name):
-        """Exports ops to collections."""
+        """
+        Exports ops to collections.
+        """
         self._name = name
         ops = {util.with_prefix(self._name, "cost"): self._cost}
         if self._is_training:
@@ -247,7 +267,9 @@ class PTBModel(object):
         util.export_state_tuples(self._final_state, self._final_state_name)
 
     def import_ops(self):
-        """Imports ops from collections."""
+        """
+        Imports ops from collections.
+        """
         if self._is_training:
             self._train_op = tf.get_collection_ref("train_op")[0]
             self._lr = tf.get_collection_ref("lr")[0]
@@ -313,7 +335,9 @@ class PTBModel(object):
 
 
 class SmallConfig(object):
-    """Small config."""
+    """
+    Small config.
+    """
     init_scale = 0.1
     learning_rate = 1.0
     max_grad_norm = 5
@@ -330,7 +354,9 @@ class SmallConfig(object):
 
 
 class MediumConfig(object):
-    """Medium config."""
+    """
+    Medium config.
+    """
     init_scale = 0.05
     learning_rate = 1.0
     max_grad_norm = 5
@@ -347,7 +373,9 @@ class MediumConfig(object):
 
 
 class LargeConfig(object):
-    """Large config."""
+    """
+    Large config.
+    """
     init_scale = 0.04
     learning_rate = 1.0
     max_grad_norm = 10
@@ -364,7 +392,9 @@ class LargeConfig(object):
 
 
 class TestConfig(object):
-    """Tiny config, for testing."""
+    """
+    Tiny config, for testing.
+    """
     init_scale = 0.1
     learning_rate = 1.0
     max_grad_norm = 1
@@ -403,7 +433,9 @@ def get_config(model):
 
 
 def run_epoch(session, model, eval_op=None, verbose=False):
-    """Runs the model on the given data."""
+    """
+    Runs the model on the given data.
+    """
     print("Beginning")
     start_time = time.time()
     costs = 0.0
@@ -442,6 +474,9 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
 
 def main(irrelevant):
+    """
+    Main function.
+    """
     if not data_path:
         raise ValueError("Must set data_path to PTB data directory")
     gpus = [
